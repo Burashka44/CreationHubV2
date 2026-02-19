@@ -1,0 +1,67 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Build output
+dist/
+build/
+.next/
+out/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+build_log*.txt
+
+# Docker volumes and data
+volumes/
+ai_data/
+db_data/
+pgadmin_data/
+
+# Backups (stored locally, not in git)
+backups/
+
+# Test files
+*.mp4
+*.mkv
+*.avi
+test_*
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# SQLite
+*.sqlite
+*.sqlite3
+
+# Large archives
+*.tar.gz
+*.zip
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Supabase local
+.supabase/
+
+# Temp SQL
+update_db_*.sql
+*.sql.gz
