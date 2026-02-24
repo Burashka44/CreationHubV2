@@ -1,29 +1,49 @@
 'use client';
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import AppShell from '@/components/layout/AppShell';
-import { Globe, ExternalLink } from 'lucide-react';
+import { api } from '@/lib/api';
+import { Bot, Activity, Play, Square, Terminal, ExternalLink } from 'lucide-react';
 
-export default function OpenclawPage() {
+export default function OpenClawPage() {
+  const [agents, setAgents] = useState<any[]>([]);
+
+  useEffect(() => {
+    // Stub data
+    setAgents([
+      { id: 'semen', name: 'Semen', port: 3011, status: 'online', role: 'DevOps' },
+      { id: 'helen', name: 'Helen', port: 3012, status: 'offline', role: 'HR' },
+      { id: 'mama',  name: 'Mama',  port: 3013, status: 'online', role: 'Manager' },
+      { id: 'vera',  name: 'Vera',  port: 3014, status: 'online', role: 'Support' },
+      { id: 'burashka', name: 'Burashka', port: 3015, status: 'online', role: 'System' },
+    ]);
+  }, []);
+
   return (
     <AppShell>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-        <h1 style={{ fontSize: 22, fontWeight: 700 }}>OpenClaw</h1>
-        <div className="card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, padding: '40px 24px', textAlign: 'center' }}>
-          <div style={{ width: 64, height: 64, borderRadius: 16, background: 'linear-gradient(135deg, #6366f1, #a855f7)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 30 }}>🦞</div>
-          <h2 style={{ fontSize: 18, fontWeight: 700 }}>OpenClaw Control Panel</h2>
-          <p style={{ fontSize: 13, color: 'var(--text-secondary)', maxWidth: 400, lineHeight: 1.6 }}>
-            OpenClaw управляется через отдельный интерфейс. Вы можете открыть его напрямую или дождаться интеграции в V2.
-          </p>
-          <a
-            href="http://192.168.1.220:3011/overview"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="btn btn-primary"
-            style={{ gap: 8 }}
-          >
-            <ExternalLink size={14} /> Открыть OpenClaw UI
-          </a>
-        </div>
+      <h1 style={{ marginBottom: 20 }}>OpenClaw Agents</h1>
+      
+      <div className="grid-auto">
+        {agents.map(agent => (
+          <div key={agent.id} className={`badge status-${agent.status}`}>
+            <div className="badge-header">
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <span style={{ fontSize: 24 }}>👾</span>
+                <div>
+                  <div style={{ fontWeight: 600 }}>{agent.name}</div>
+                  <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>:{agent.port} • {agent.role}</div>
+                </div>
+              </div>
+              <div className={`status-dot ${agent.status}`} />
+            </div>
+
+            <div className="badge-actions" style={{ marginTop: 16 }}>
+              <button className="btn btn-secondary btn-sm"><Play size={12} /> Start</button>
+              {typeof window !== 'undefined' && <a href={`http://${window.location.hostname}:${agent.port}`} target="_blank" className="btn btn-secondary btn-sm">
+                <ExternalLink size={12} /> Web UI
+              </a>}
+            </div>
+          </div>
+        ))}
       </div>
     </AppShell>
   );

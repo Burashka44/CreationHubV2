@@ -33,6 +33,12 @@ const app = express();
 const server = createServer(app);
 const PORT = process.env.PORT || 9292;
 
+// ── Global Logger (Debug)
+app.use((req, res, next) => {
+  console.log(`[API Incoming] ${req.method} ${req.url} from ${req.ip}`);
+  next();
+});
+
 // ── Security headers
 app.use(helmet({
   contentSecurityPolicy: false,
@@ -41,7 +47,7 @@ app.use(helmet({
 
 // ── CORS
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || ['http://localhost:7778', 'http://192.168.1.220:7778'],
+  origin: true, // Reflect request origin
   credentials: true,
 }));
 

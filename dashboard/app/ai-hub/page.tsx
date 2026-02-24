@@ -85,7 +85,12 @@ export default function AIHubPage() {
         }),
       });
 
-      if (!res.ok || !res.body) throw new Error(`${res.status} ${res.statusText}`);
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: res.statusText }));
+        throw new Error(err.error || `Error ${res.status}`);
+      }
+
+      if (!res.body) throw new Error('No response body');
 
       // Stream response
       const reader = res.body.getReader();
@@ -98,15 +103,24 @@ export default function AIHubPage() {
         timestamp: new Date(), model: selectedModel,
       }]);
 
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        const chunk = decoder.decode(value);
-        const lines = chunk.split('\n');
+      let done = false;
+      while (!done) {
+        const { value, done: doneReading } = await reader.read();
+        done = doneReading;
+        const chunkValue = decoder.decode(value, { stream: true });
+        
+        const lines = chunkValue.split('\n');
         for (const line of lines) {
           if (!line.startsWith('data: ')) continue;
           const data = line.slice(6);
-          if (data === '[DONE]') break;
+          if (data.trim() === '[DONE]') {
+            done = true; 
+            break;
+          }
+          if (data.startsWith('[ERROR]')) {
+             throw new Error(data.slice(7));
+          }
+
           try {
             const json = JSON.parse(data);
             const delta = json.choices?.[0]?.delta?.content || json.message?.content || '';

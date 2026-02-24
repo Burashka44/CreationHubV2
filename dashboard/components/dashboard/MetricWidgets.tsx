@@ -15,11 +15,14 @@ interface GaugeProps {
 
 export function GaugeCard({ label, value, unit = '%', subLabel, color, icon, size = 'md' }: GaugeProps) {
   const pct = value !== null ? Math.min(100, Math.max(0, value)) : 0;
-  const c = color || (value !== null ? percentColor(value) : 'var(--color-unknown)');
+  // Fix: If value is 0 (e.g. 0% load), show green, not 'unknown'
+  const c = color || (value !== null ? percentColor(value) : (value === 0 ? 'var(--color-online)' : 'var(--color-unknown)'));
   const radius = size === 'sm' ? 32 : 44;
   const strokeW = size === 'sm' ? 5 : 7;
   const circumference = 2 * Math.PI * radius;
-  const dash = (pct / 100) * circumference;
+  // Fix: If value is null (loading/offline), show full grey circle or 0 dash?
+  // Let's show empty dash if null.
+  const dash = value !== null ? (pct / 100) * circumference : 0;
   const svgSize = (radius + strokeW) * 2 + 4;
   const center = radius + strokeW + 2;
 

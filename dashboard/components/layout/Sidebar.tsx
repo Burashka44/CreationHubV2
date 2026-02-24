@@ -94,7 +94,7 @@ export default function Sidebar({ onClose }: { onClose?: () => void }) {
       {/* Bottom: V1 link */}
       <div style={{ padding: '12px 8px', borderTop: '1px solid var(--border)' }}>
         <a
-          href="http://192.168.1.220:7777"
+          href={typeof window !== 'undefined' ? `http://${window.location.hostname}:7777` : '#'}
           target="_blank"
           rel="noopener noreferrer"
           className="nav-link"

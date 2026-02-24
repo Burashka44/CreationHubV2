@@ -73,8 +73,8 @@ export default function ServicesPage() {
 
   async function openLogs(name: string) {
     try {
-      const out = await api.services.logs(name, 300) as string;
-      setLogsModal({ name, output: out });
+      const { logs } = await api.services.logs(name, 300) as { logs: string };
+      setLogsModal({ name, output: logs || 'Empty logs' });
     } catch (err: any) {
       setLogsModal({ name, output: `Ошибка: ${err.message}` });
     }
@@ -201,25 +201,26 @@ function ServiceBadge({ svc, inFlight, onAction, onLogs }: {
   onLogs: (name: string) => void;
 }) {
   const isLoading = !!inFlight;
+  const targetUrl = svc.url || (svc.port && typeof window !== 'undefined' ? `http://${window.location.hostname}:${svc.port}` : undefined);
 
   return (
-    <div className={`badge status-${svc.real_status}`}>
+    <div 
+      className={`badge status-${svc.real_status}`}
+      style={{ cursor: targetUrl ? 'pointer' : 'default' }}
+      onClick={() => { if (targetUrl) window.open(targetUrl, '_blank', 'noopener,noreferrer'); }}
+      title={svc.description || 'Открыть сервис'}
+    >
       {/* Header row */}
-      <div className="badge-header">
+      <div className="badge-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
           {svc.icon && <span style={{ fontSize: 18 }}>{svc.icon}</span>}
-          <span className="badge-name" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          <span className="badge-name" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: 'bold' }}>
             {svc.display_name}
           </span>
+          { targetUrl && <ExternalLink size={11} style={{ opacity: 0.5 }} /> }
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
           {STATUS_ICON[svc.real_status]}
-          {svc.url && (
-            <a href={svc.url} target="_blank" rel="noopener noreferrer"
-              className="btn btn-ghost btn-icon-sm" title="Открыть">
-              <ExternalLink size={13} />
-            </a>
-          )}
         </div>
       </div>
 
@@ -238,7 +239,8 @@ function ServiceBadge({ svc, inFlight, onAction, onLogs }: {
 
       {/* Description */}
       {svc.description && (
-        <div className="badge-meta" style={{
+        <div style={{
+          fontSize: 12, color: 'var(--text-muted)', marginTop: 8,
           overflow: 'hidden', display: '-webkit-box',
           WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
         }}>
@@ -247,28 +249,25 @@ function ServiceBadge({ svc, inFlight, onAction, onLogs }: {
       )}
 
       {/* Actions */}
-      <div className="badge-actions">
-        {svc.real_status !== 'online' ? (
-          <button className="btn btn-success btn-sm" disabled={isLoading}
-            onClick={() => onAction(svc.name, 'start')}>
-            {inFlight === 'start' ? <span className="spinner" /> : <Play size={12} />}
-            Старт
-          </button>
-        ) : (
+      <div className="badge-actions" onClick={e => e.stopPropagation()}>
+        {svc.container_name && (
           <>
-            <button className="btn btn-warning btn-sm" disabled={isLoading}
+            <button className="btn btn-success btn-sm" disabled={isLoading || svc.real_status === 'online'}
+              onClick={() => onAction(svc.name, 'start')}>
+              {inFlight === 'start' ? <span className="spinner" /> : <Play size={12} />}
+              Старт
+            </button>
+            <button className="btn btn-warning btn-sm" disabled={isLoading || svc.real_status !== 'online'}
               onClick={() => onAction(svc.name, 'restart')}>
               {inFlight === 'restart' ? <span className="spinner" /> : <RotateCcw size={12} />}
-              Рестарт
             </button>
-            <button className="btn btn-danger btn-sm" disabled={isLoading}
+            <button className="btn btn-danger btn-sm" disabled={isLoading || svc.real_status !== 'online'}
               onClick={() => onAction(svc.name, 'stop')}>
               {inFlight === 'stop' ? <span className="spinner" /> : <Square size={12} />}
-              Стоп
             </button>
           </>
         )}
-        <button className="btn btn-secondary btn-sm" onClick={() => onLogs(svc.name)}>
+        <button className="btn btn-secondary btn-sm" onClick={() => onLogs(svc.name)} style={{ marginLeft: 'auto' }}>
           <Terminal size={12} /> Логи
         </button>
       </div>

@@ -14,6 +14,10 @@ export const viewport: Viewport = {
   initialScale: 1,
 };
 
+import dynamic from 'next/dynamic';
+
+const Burashka = dynamic(() => import('@/components/dashboard/Burashka'), { ssr: false });
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="ru" data-theme="dark" data-scale="100" suppressHydrationWarning>
@@ -23,6 +27,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body>
         {children}
+        <Burashka />
       </body>
     </html>
   );

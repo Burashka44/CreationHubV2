@@ -71,9 +71,9 @@ async function collect() {
       collect._lastCleanup = now;
       const { rows } = await db.query("SELECT value FROM app_settings WHERE key='log_retention_days'");
       const days = parseInt(rows[0]?.value || '30');
-      await db.query(`DELETE FROM system_metrics WHERE timestamp < NOW() - INTERVAL '${days} days'`);
-      await db.query(`DELETE FROM disk_snapshots WHERE timestamp < NOW() - INTERVAL '${days} days'`);
-      await db.query(`DELETE FROM gpu_metrics WHERE timestamp < NOW() - INTERVAL '${days} days'`);
+      await db.query("DELETE FROM system_metrics WHERE timestamp < NOW() - ($1 || ' days')::interval", [days]);
+      await db.query("DELETE FROM disk_snapshots WHERE timestamp < NOW() - ($1 || ' days')::interval", [days]);
+      await db.query("DELETE FROM gpu_metrics WHERE timestamp < NOW() - ($1 || ' days')::interval", [days]);
     }
 
   } catch (err) {

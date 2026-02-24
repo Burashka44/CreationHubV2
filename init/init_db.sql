@@ -427,6 +427,17 @@ INSERT INTO app_settings (key, value, description) VALUES
 -- UPDATE SCHEDULES
 -- ============================================================
 
+CREATE TABLE ai_usage_log (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID REFERENCES admins(id) ON DELETE SET NULL,
+    model VARCHAR(100) NOT NULL,
+    prompt_preview TEXT,
+    response_preview TEXT,
+    tokens_used INTEGER,
+    duration_ms INTEGER,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 CREATE TABLE update_schedules (
   id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   service_name    TEXT NOT NULL,
@@ -517,3 +528,8 @@ SELECT
     ), 0)
   )::INTEGER AS score,
   NOW() AS calculated_at;
+
+-- Default Admin (password: admin123)
+INSERT INTO admins (email, password_hash, name, role, totp_secret)
+VALUES ('admin@creationhub.local', '$2b$10$MxZ0pvQREqUkIZwk2lD2pe1Dii54IeOMj2yymCW587nmTmg8CYaDa', 'Super Admin', 'admin', NULL)
+ON CONFLICT (email) DO NOTHING;

@@ -27,28 +27,43 @@ interface GeoMapProps {
 }
 
 export default function GeoMap({ lat, lon, ip, city }: GeoMapProps) {
+  const [theme, setTheme] = React.useState('dark');
+
+  useEffect(() => {
+    // Observer for theme changes
+    const obs = new MutationObserver(() => {
+        setTheme(document.documentElement.getAttribute('data-theme') || 'dark');
+    });
+    obs.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+    setTheme(document.documentElement.getAttribute('data-theme') || 'dark');
+    return () => obs.disconnect();
+  }, []);
+
   if (!lat || !lon) return (
     <div style={{ height: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>
       Нет геоданных
     </div>
   );
 
+  // CartoDB Dark Matter vs Positron (Light)
+  const tileUrl = theme === 'dark' 
+    ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+    : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
+
   return (
     <div style={{ height: 200, borderRadius: 8, overflow: 'hidden' }}>
       <MapContainer
+        key={theme} // Force re-render on theme change
         center={[lat, lon]}
         zoom={8}
         style={{ height: '100%', width: '100%' }}
         zoomControl={false}
         attributionControl={false}
       >
-        <TileLayer
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          // Dark-style free tiles
-        />
+        <TileLayer url={tileUrl} />
         <Marker position={[lat, lon]} icon={icon}>
           <Popup>
-            <div style={{ fontFamily: 'system-ui', fontSize: 13 }}>
+            <div style={{ fontFamily: 'system-ui', fontSize: 13, color: '#333' }}>
               <strong>{ip}</strong><br />
               {city}
             </div>

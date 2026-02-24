@@ -5,6 +5,7 @@ import { useMetricsWS, formatUptime, formatBytes, percentColor } from '@/lib/hoo
 import { GaugeCard, BarMetric, TempBadge } from '@/components/dashboard/MetricWidgets';
 import { api } from '@/lib/api';
 import { useI18n } from '@/lib/i18n';
+import Link from 'next/link';
 import {
   Cpu, MemoryStick, HardDrive, Activity, Wifi, Server,
   Globe, Clock, Zap, BarChart2, ThermometerSun,
@@ -80,7 +81,7 @@ export default function DashboardPage() {
           </div>
 
           {/* Services */}
-          <div className="card" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <Link href="/services" className="card" style={{ display: 'flex', alignItems: 'center', gap: 12, textDecoration: 'none', color: 'inherit', cursor: 'pointer' }}>
             <Server size={22} style={{ color: onlineServicesCount === allServicesCount ? 'var(--color-online)' : 'var(--color-warning)', flexShrink: 0 }} />
             <div>
               <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{t.home.services}</div>
@@ -90,10 +91,10 @@ export default function DashboardPage() {
               </div>
               <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>онлайн сервисов</div>
             </div>
-          </div>
+          </Link>
 
           {/* Public IP */}
-          <div className="card" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <Link href="/network" className="card" style={{ display: 'flex', alignItems: 'center', gap: 12, textDecoration: 'none', color: 'inherit', cursor: 'pointer' }}>
             <Globe size={22} style={{ color: 'var(--accent)', flexShrink: 0 }} />
             <div style={{ minWidth: 0, flex: 1 }}>
               <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{t.home.public_ip}</div>
@@ -105,7 +106,7 @@ export default function DashboardPage() {
                 VPN
               </span>
             )}
-          </div>
+          </Link>
         </div>
 
         {/* ── CPU + RAM */}
@@ -114,14 +115,14 @@ export default function DashboardPage() {
           <div className="card">
             <div className="card-title"><Cpu size={14} /> {t.home.cpu}</div>
             <div style={{ display: 'grid', gridTemplateColumns: '120px 1fr', gap: 16, alignItems: 'center' }}>
-              <GaugeCard label="" value={m?.cpu ?? null} size="md" color={m?.cpu !== null ? percentColor(m!.cpu) : undefined} />
+              <GaugeCard label="" value={m?.cpu ?? null} size="md" color={m?.cpu != null ? percentColor(m.cpu) : undefined} />
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                 <TempBadge label={t.home.temp} value={m?.cpuTemp ?? null} />
                 {m?.load && <>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>1м / 5м / 15м</span>
                     <span style={{ fontSize: 12, fontWeight: 500, fontFamily: 'var(--font-mono)' }}>
-                      {m.load.avg1.toFixed(2)} / {m.load.avg5.toFixed(2)} / {m.load.avg15.toFixed(2)}
+                      {m?.load?.avg1.toFixed(2)} / {m?.load?.avg5.toFixed(2)} / {m?.load?.avg15.toFixed(2)}
                     </span>
                   </div>
                 </>}
@@ -137,10 +138,10 @@ export default function DashboardPage() {
                 label={`${m?.mem?.used_gb?.toFixed(1) || 0} / ${m?.mem?.total_gb?.toFixed(1) || 0} ГБ`}
                 value={m?.mem?.percent ?? null}
               />
-              {m?.mem && m.mem.swap_total_gb > 0 && (
+              {m?.mem && (m.mem as any).swap_total_gb > 0 && (
                 <BarMetric
                   label={`Swap: ${(m.mem as any).swap_used_gb?.toFixed(1) || 0} ГБ`}
-                  value={m.mem.swap_percent}
+                  value={(m.mem as any).swap_percent ?? 0}
                 />
               )}
             </div>
@@ -189,7 +190,7 @@ export default function DashboardPage() {
           <div className="card">
             <div className="card-title"><HardDrive size={14} /> {t.home.disk}</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {m.disks.map((disk: any) => (
+              {(m?.disks ?? []).map((disk: any) => (
                 <BarMetric
                   key={disk.mount_point}
                   label={`${disk.mount_point} (${formatBytes(disk.used_bytes)} / ${formatBytes(disk.total_bytes)})`}
@@ -203,7 +204,7 @@ export default function DashboardPage() {
 
         {/* ── Network Chart + Map */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-          <div className="card">
+          <Link href="/network" className="card" style={{ textDecoration: 'none', color: 'inherit', cursor: 'pointer' }}>
             <div className="card-title" style={{ justifyContent: 'space-between' }}>
               <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Activity size={14} /> {t.home.network}</span>
               {netSpeed && (
@@ -214,9 +215,9 @@ export default function DashboardPage() {
               )}
             </div>
             <NetworkChart metrics={m} />
-          </div>
+          </Link>
 
-          <div className="card" style={{ minHeight: 200 }}>
+          <Link href="/network" className="card" style={{ minHeight: 200, textDecoration: 'none', color: 'inherit', cursor: 'pointer' }}>
             <div className="card-title"><Globe size={14} /> {t.home.map_title}</div>
             {publicIp ? (
               <GeoMap lat={publicIp.lat} lon={publicIp.lon} ip={publicIp.ip} city={publicIp.city} />
@@ -226,14 +227,14 @@ export default function DashboardPage() {
                 <p>Определение геолокации...</p>
               </div>
             )}
-          </div>
+          </Link>
         </div>
 
         {/* ── Services grid (compact) */}
-        <div className="card">
+        <Link href="/services" className="card" style={{ textDecoration: 'none', color: 'inherit', cursor: 'pointer' }}>
           <div className="card-title" style={{ justifyContent: 'space-between' }}>
             <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Server size={14} /> {t.home.services}</span>
-            <a href="/services" style={{ fontSize: 12, color: 'var(--accent)' }}>Все сервисы →</a>
+            <span style={{ fontSize: 12, color: 'var(--accent)' }}>Все сервисы →</span>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 8 }}>
             {services.slice(0, 12).map((svc: any) => (
@@ -252,7 +253,7 @@ export default function DashboardPage() {
               </div>
             ))}
           </div>
-        </div>
+        </Link>
 
       </div>
     </AppShell>

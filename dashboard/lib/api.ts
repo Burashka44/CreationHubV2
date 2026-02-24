@@ -1,5 +1,7 @@
 // ── API client with auto token refresh
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://192.168.1.220:9292';
+// Using direct IP to avoid Docker build-time ENV issues
+const hostname = typeof window !== 'undefined' ? window.location.hostname : '127.0.0.1';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || `http://${hostname}:9292`;
 
 function getToken() {
   if (typeof window === 'undefined') return null;
@@ -51,6 +53,7 @@ async function request<T>(path: string, opts: RequestInit = {}, retry = true): P
     if (!refreshing) refreshing = refreshAccess().finally(() => { refreshing = null; });
     const ok = await refreshing;
     if (ok) return request<T>(path, opts, false);
+    
     // refresh failed — redirect to login
     clearTokens();
     if (typeof window !== 'undefined') window.location.href = '/login';

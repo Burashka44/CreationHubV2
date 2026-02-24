@@ -29,16 +29,26 @@ router.get('/', async (req, res) => {
     const containerMap = {};
     for (const c of containers) {
       for (const name of c.Names) {
-        containerMap[name.replace('/', '')] = {
-          state: c.State,
-          status: c.Status,
-          id: c.Id,
-        };
+        const key = name.replace('/', '');
+        if (!containerMap[key] || containerMap[key].state !== 'running') {
+          containerMap[key] = {
+            state: c.State,
+            status: c.Status,
+            id: c.Id,
+          };
+        }
       }
     }
 
     const enriched = services.map(svc => {
-      const container = svc.container_name ? containerMap[svc.container_name] : null;
+      // Relaxed matching: check if any running container *includes* the service's container_name
+      // e.g. "creationhubv2-api-1" includes "api" (if db has "api")
+      // OR exact match if db has "creationhubv2-api-1"
+      let containerKey = svc.container_name ? Object.keys(containerMap).find(
+        k => k.includes(svc.container_name)
+      ) : null;
+      
+      const container = containerKey ? containerMap[containerKey] : null;
       return {
         ...svc,
         docker_state:  container?.state  || null,
@@ -121,8 +131,7 @@ router.get('/:name/logs', requirePermission('view_services'), async (req, res) =
       timestamps: true,
     });
 
-    res.setHeader('Content-Type', 'text/plain');
-    res.send(logs.toString('utf8').replace(/[\x00-\x08\x0e-\x1f]/g, ''));
+    res.json({ logs: logs.toString('utf8').replace(/[\x00-\x08\x0e-\x1f]/g, '') });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -156,18 +165,28 @@ async function checkAllServices() {
     const containers = await docker.listContainers({ all: true }).catch(() => []);
     const containerMap = {};
     for (const c of containers) {
-      for (const name of c.Names) containerMap[name.replace('/', '')] = c.State;
+      for (const name of c.Names) {
+        const key = name.replace('/', '');
+        if (!containerMap[key] || containerMap[key] !== 'running') {
+          containerMap[key] = c.State;
+        }
+      }
     }
 
     for (const svc of services) {
-      const dockerState = svc.container_name ? containerMap[svc.container_name] : null;
+      let containerKey = Object.keys(containerMap).find(
+        k => k.includes(svc.container_name)
+      );
+      const dockerState = containerKey ? containerMap[containerKey] : null;
       const status = dockerState === 'running' ? 'online' : (dockerState ? 'offline' : 'unknown');
       await db.query(
         'INSERT INTO service_uptime (service_id, status) VALUES ($1,$2)',
         [svc.id, status]
       );
     }
-  } catch {}
+  } catch (err) {
+    console.error('[Services Tracker Error]', err);
+  }
 }
 
 // Start the health checker

@@ -26,12 +26,16 @@ function verifyRefresh(token) {
 // Middleware: require valid JWT
 async function requireAuth(req, res, next) {
   const header = req.headers.authorization;
+  console.log(`[Auth Debug] ${req.method} ${req.path} - Header: ${header ? 'Present' : 'Missing'}`);
+  
   if (!header?.startsWith('Bearer ')) {
+    console.log('[Auth Debug] Missing or invalid Bearer header');
     return res.status(401).json({ error: 'Authorization required' });
   }
   const token = header.slice(7);
   try {
     const payload = verifyAccess(token);
+    console.log(`[Auth Debug] Token verified for user: ${payload.id}`);
 
     // Verify user still exists and is active
     const { rows } = await db.query(
@@ -39,12 +43,14 @@ async function requireAuth(req, res, next) {
       [payload.id]
     );
     if (!rows[0] || !rows[0].is_active) {
+      console.log('[Auth Debug] User not found or inactive');
       return res.status(401).json({ error: 'User not found or deactivated' });
     }
 
     req.user = rows[0];
     next();
   } catch (err) {
+    console.log(`[Auth Debug] Verification failed: ${err.name} - ${err.message}`);
     if (err.name === 'TokenExpiredError') {
       return res.status(401).json({ error: 'Token expired', code: 'TOKEN_EXPIRED' });
     }
@@ -86,4 +92,12 @@ module.exports = {
   verifyAccess, verifyRefresh,
   requireAuth, requireAdmin,
   requirePermission,
+  // Adapters for router compatibility
+  authenticate: () => (req, res, next) => {
+    Promise.resolve(requireAuth(req, res, next)).catch(next);
+  },
+  requireRole: (role) => {
+    if (role === 'admin') return requireAdmin;
+    return requirePermission(role);
+  }
 };

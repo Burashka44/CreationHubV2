@@ -37,7 +37,16 @@ export default function Header({ onMenuToggle, sidebarOpen }: HeaderProps) {
     setTheme(next);
     document.documentElement.setAttribute('data-theme', next);
     localStorage.setItem('ch_theme', next);
-    api.settings.theme(next).catch(() => {});
+    // Optional: sync with backend user settings
+    api.settings.update({ theme: next }).catch(() => {});
+  }
+
+  function toggleLang() {
+    const next = lang === 'ru' ? 'en' : 'ru';
+    setLang(next);
+    localStorage.setItem('ch_lang', next);
+    // Optional: sync with backend
+    api.settings.update({ language: next }).catch(() => {});
   }
 
   async function handleLogout() {
@@ -91,7 +100,7 @@ export default function Header({ onMenuToggle, sidebarOpen }: HeaderProps) {
         {/* Language toggle */}
         <button
           className="btn btn-ghost btn-sm"
-          onClick={() => setLang(lang === 'ru' ? 'en' : 'ru')}
+          onClick={toggleLang}
           style={{ gap: 4, fontWeight: 600, fontSize: 12 }}
           title="Switch language"
         >
